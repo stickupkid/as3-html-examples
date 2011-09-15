@@ -1,5 +1,7 @@
 package info.simonrichardson.html.editor
 {
+	import flash.utils.setTimeout;
+	import org.osflash.logger.logs.info;
 	import org.osflash.logger.logs.warn;
 
 	import flash.events.Event;
@@ -55,6 +57,9 @@ package info.simonrichardson.html.editor
 				socket.readBytes(bytes);
 				
 				const request : String = bytes.toString();
+				
+				info(request);
+				
 				const requestPath : String = request.substring(4, request.indexOf("HTTP/") - 1);
 				
 				if (null != _requests[requestPath])
@@ -62,22 +67,36 @@ package info.simonrichardson.html.editor
 					const xml : XML = _requests[requestPath];
 					const content : String = xml.toXMLString();
 					
-					socket.writeUTFBytes("HTTP/1.1 200 OK\n");
-					socket.writeUTFBytes("Content-Type: text/html\n\n");
-					socket.writeUTFBytes(content);
+					const time : int = requestPath == '/' ? 1000 : 10;
+					setTimeout(handleFinish, time, socket, content);
 				}
 				else
 				{
 					socket.writeUTFBytes("HTTP/1.1 404 Not Found\n");
 					socket.writeUTFBytes("Content-Type: text/html\n\n");
 					socket.writeUTFBytes("<html><body><h2>Page Not Found</h2></body></html>");
+					
+					socket.flush();
+					socket.close();
 				}
 			}
 			catch (error : Error)
 			{
 				warn(error);
+				
+				socket.close();
 			}
-						
+			
+		}
+		
+		private function handleFinish(socket : Socket, content : String) : void
+		{
+			info('Write');
+			
+			socket.writeUTFBytes("HTTP/1.1 200 OK\n");
+			socket.writeUTFBytes("Content-Type: text/html\n\n");
+			socket.writeUTFBytes(content);
+			
 			socket.flush();
 			socket.close();
 		}

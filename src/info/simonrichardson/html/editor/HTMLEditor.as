@@ -13,6 +13,8 @@
 	import org.osflash.logger.output.SOSMaxOutput;
 	import org.osflash.logger.utils.getDefaultLogger;
 
+	import flash.display.Bitmap;
+	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
@@ -24,7 +26,7 @@
 	import flash.net.URLRequest;
 	import flash.utils.setTimeout;
 
-	[SWF(backgroundColor="#cccccc", frameRate="60", width="640", height="480")]
+	[SWF(backgroundColor="#cccccc", frameRate="60", width="640", height="800")]
 	public class HTMLEditor extends Sprite
 	{
 		
@@ -73,13 +75,22 @@
 			
 			if(HTMLLoader.isSupported)
 			{
-				const loader : HTMLLoader = new HTMLLoader();
-				loader.y = 200;
-				loader.width = stage.stageWidth;
-				loader.height = stage.stageHeight - 200;
-				loader.load(new URLRequest('http://0.0.0.0:' + server.port));
-				loader.addEventListener(Event.COMPLETE, handleHTMLComplete);
-				addChild(loader);
+				info('HTMLLoader');
+				
+				const loader0 : HTMLLoader = new HTMLLoader();
+				loader0.y = 200;
+				loader0.width = stage.stageWidth;
+				loader0.height = 200;
+				loader0.load(new URLRequest('http://0.0.0.0:' + server.port));
+				loader0.addEventListener(Event.COMPLETE, handleHTMLComplete);
+				addChild(loader0);
+				
+				const loader1 : HTMLLoader = new HTMLLoader();
+				loader1.y = 400;
+				loader1.width = stage.stageWidth;
+				loader1.height = 200;
+				loader1.load(new URLRequest('http://0.0.0.0:' + server.port + '/1'));
+				addChild(loader1);
 			}
 			else if(StageWebView.isSupported)
 			{
@@ -122,35 +133,39 @@
 			{
 				// Yes we're doing JavaScript here!
 				const loader : HTMLLoader = HTMLLoader(event.target);
-				const list : Object = loader.window.document.getElementsByTagName('a');
+				info('LOADER : ', loader.location);
 				
-				const total : int = numChildren;
-				for(var i : int = 0; i < total; i++)
+				const list : Object = loader.window.document.getElementsByTagName('a');
+				if(list['length'] > 0)
 				{
-					const child : DisplayObject = getChildAt(i);
-					if(child == loader) continue;
-					else if(child.name == list.item(0).id) child.visible = true;
-					else child.visible = false;
+					const total : int = numChildren;
+					for(var i : int = 0; i < total; i++)
+					{
+						const child : DisplayObject = getChildAt(i);
+						if(child is HTMLLoader) continue;
+						else if(child.name == list.item(0).id) child.visible = true;
+						else child.visible = false;
+					}
 				}
 			}
 			else if(StageWebView.isSupported)
 			{
 				// We can just bitmap the outout if required!
-				//const stageWebView : StageWebView = StageWebView(event.target);
+				const stageWebView : StageWebView = StageWebView(event.target);
 				
-				//const webViewBitmapData : BitmapData = new BitmapData(	stageWebView.viewPort.width, 
-				//														stageWebView.viewPort.height
-				//														);
+				const webViewBitmapData : BitmapData = new BitmapData(	stageWebView.viewPort.width, 
+																		stageWebView.viewPort.height
+																		);
 				
-				// stageWebView.drawViewPortToBitmapData(webViewBitmapData);
+				 stageWebView.drawViewPortToBitmapData(webViewBitmapData);
 								
-				// const webViewBitmap : Bitmap = new Bitmap(webViewBitmapData);
-				// webViewBitmap.x = stageWebView.viewPort.x;
-				// webViewBitmap.y = stageWebView.viewPort.y;
-				// addChild(webViewBitmap);
+				 const webViewBitmap : Bitmap = new Bitmap(webViewBitmapData);
+				 webViewBitmap.x = stageWebView.viewPort.x;
+				 webViewBitmap.y = stageWebView.viewPort.y;
+				 addChild(webViewBitmap);
 				
-				// stageWebView.stage = null;
-				// stageWebView.dispose();
+				 stageWebView.stage = null;
+				 stageWebView.dispose();
 				
 				getChildAt(0).visible = true;
 			}
